@@ -78,7 +78,9 @@ public class HookUtils {
                 LOG.warn("message store is not writeable, so putMessage is forbidden " + brokerController.getMessageStore().getRunningFlags().getFlagBits());
             }
 
-            return new PutMessageResult(PutMessageStatus.SERVICE_NOT_AVAILABLE, null);
+            // todo 磁盘教研，这里先注释掉，不然磁盘空间占用过高会一直写不进去
+//            return new PutMessageResult(PutMessageStatus.SERVICE_NOT_AVAILABLE, null);
+            PRINT_TIMES.set(0);
         } else {
             PRINT_TIMES.set(0);
         }
