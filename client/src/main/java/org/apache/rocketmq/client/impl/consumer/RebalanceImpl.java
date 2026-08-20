@@ -236,8 +236,11 @@ public abstract class RebalanceImpl {
 
     public boolean doRebalance(final boolean isOrder) {
         boolean balanced = true;
+
+        // 获取订阅列表
         Map<String, SubscriptionData> subTable = this.getSubscriptionInner();
         if (subTable != null) {
+            // 遍历
             for (final Map.Entry<String, SubscriptionData> entry : subTable.entrySet()) {
                 final String topic = entry.getKey();
                 try {

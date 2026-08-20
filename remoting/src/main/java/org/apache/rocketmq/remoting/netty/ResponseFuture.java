@@ -29,7 +29,10 @@ public class ResponseFuture {
     private final int opaque;
     private final RemotingCommand request;
     private final long timeoutMillis;
+
+    // 返回的回调函数
     private final InvokeCallback invokeCallback;
+
     private final long beginTimestamp = System.currentTimeMillis();
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -37,6 +40,8 @@ public class ResponseFuture {
 
     private final AtomicBoolean executeCallbackOnlyOnce = new AtomicBoolean(false);
     private volatile RemotingCommand responseCommand;
+
+    // 结果状态
     private volatile boolean sendRequestOK = true;
     private volatile Throwable cause;
     private volatile boolean interrupted = false;
@@ -56,6 +61,9 @@ public class ResponseFuture {
         this.once = once;
     }
 
+    /**
+     * 执行回调
+     */
     public void executeInvokeCallback() {
         if (invokeCallback != null) {
             if (this.executeCallbackOnlyOnce.compareAndSet(false, true)) {
@@ -80,11 +88,21 @@ public class ResponseFuture {
         return diff > this.timeoutMillis;
     }
 
+    /**
+     * 等待结果，唤醒后返回结果
+     * @param timeoutMillis
+     * @return
+     * @throws InterruptedException
+     */
     public RemotingCommand waitResponse(final long timeoutMillis) throws InterruptedException {
         this.countDownLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         return this.responseCommand;
     }
 
+    /**
+     * 设置结果，唤醒
+     * @param responseCommand
+     */
     public void putResponse(final RemotingCommand responseCommand) {
         this.responseCommand = responseCommand;
         this.countDownLatch.countDown();

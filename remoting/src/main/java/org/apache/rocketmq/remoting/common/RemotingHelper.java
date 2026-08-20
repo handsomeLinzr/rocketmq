@@ -145,10 +145,19 @@ public class RemotingHelper {
         }
     }
 
+    /**
+     *
+     * 从 channel 中解析远程地址
+     *
+     * @param channel
+     * @return
+     */
     public static String parseChannelRemoteAddr(final Channel channel) {
         if (null == channel) {
             return "";
         }
+
+        // 获取地址
         Attribute<String> att = channel.attr(REMOTE_ADDR_KEY);
         if (att == null) {
             // mocked in unit test

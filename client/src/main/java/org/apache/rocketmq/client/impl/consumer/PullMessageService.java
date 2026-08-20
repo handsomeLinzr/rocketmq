@@ -30,7 +30,10 @@ import org.apache.rocketmq.logging.org.slf4j.LoggerFactory;
 
 public class PullMessageService extends ServiceThread {
     private final Logger logger = LoggerFactory.getLogger(PullMessageService.class);
-    private final LinkedBlockingQueue<MessageRequest> messageRequestQueue = new LinkedBlockingQueue<>();  // pull || pop 请求
+
+    // pull || pop 请求
+    // 启动后会开一个线程循环从这里获取数据处理
+    private final LinkedBlockingQueue<MessageRequest> messageRequestQueue = new LinkedBlockingQueue<>();
 
     // MQClientInstance，构造函数设置
     private final MQClientInstance mQClientFactory;
@@ -128,7 +131,8 @@ public class PullMessageService extends ServiceThread {
 
         while (!this.isStopped()) {
             try {
-                MessageRequest messageRequest = this.messageRequestQueue.take();  // 获取请求
+                // 获取请求
+                MessageRequest messageRequest = this.messageRequestQueue.take();
                 if (messageRequest.getMessageRequestMode() == MessageRequestMode.POP) {
                     this.popMessage((PopRequest)messageRequest);
                 } else {

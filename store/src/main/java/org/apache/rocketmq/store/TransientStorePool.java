@@ -45,14 +45,19 @@ public class TransientStorePool {
 
     /**
      * It's a heavy init method.
+     *
+     * // 申请5块1G不参与swap的内存空间
+     *
      */
-    public void init() {   // 申请5块1G不参与swap的内存空间
+    public void init() {
         for (int i = 0; i < poolSize; i++) {
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(fileSize);
 
             final long address = ((DirectBuffer) byteBuffer).address();
             Pointer pointer = new Pointer(address);
-            LibC.INSTANCE.mlock(pointer, new NativeLong(fileSize));  // 在内存中锁住指定的地址，未来发生内容-磁盘 swap分区的时候不会交换到这个地址空间
+
+            // 在内存中锁住指定的地址，未来发生内容-磁盘 swap分区的时候不会交换到这个地址空间
+            LibC.INSTANCE.mlock(pointer, new NativeLong(fileSize));
 
             availableBuffers.offer(byteBuffer);
         }

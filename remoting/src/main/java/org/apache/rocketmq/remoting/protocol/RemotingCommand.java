@@ -41,12 +41,15 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+/**
+ * 远程命令
+ */
 public class RemotingCommand {
     public static final String SERIALIZE_TYPE_PROPERTY = "rocketmq.serialize.type";
     public static final String SERIALIZE_TYPE_ENV = "ROCKETMQ_SERIALIZE_TYPE";
     public static final String REMOTING_VERSION_KEY = "rocketmq.remoting.version";
     static final Logger log = LoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
-    private static final int RPC_TYPE = 0; // 0, REQUEST_COMMAND
+    private static final int RPC_TYPE = 0; // 0, REQUEST_COMMAND  默认是 request
     private static final int RPC_ONEWAY = 1; // 0, RPC
     private static final Map<Class<? extends CommandCustomHeader>, Field[]> CLASS_HASH_MAP =
         new HashMap<>();
@@ -523,6 +526,10 @@ public class RemotingCommand {
         return RemotingCommandType.REQUEST_COMMAND;
     }
 
+    /**
+     * 判断是 request 还是 response
+     * @return
+     */
     @JSONField(serialize = false)
     public boolean isResponseType() {
         int bits = 1 << RPC_TYPE;

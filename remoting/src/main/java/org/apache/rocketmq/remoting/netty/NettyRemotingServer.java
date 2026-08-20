@@ -529,6 +529,9 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
     }
 
+    /**
+     * broker 服务端处理
+     */
     @ChannelHandler.Sharable
     public class NettyServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 
@@ -537,9 +540,13 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             int localPort = RemotingHelper.parseSocketAddressPort(ctx.channel().localAddress());
             NettyRemotingAbstract remotingAbstract = NettyRemotingServer.this.remotingServerTable.get(localPort);
             if (localPort != -1 && remotingAbstract != null) {
+                // 处理收到的请求
                 remotingAbstract.processMessageReceived(ctx, msg);
+                // 直接返回
                 return;
             }
+
+            // 远程连接已关闭，所以这里也关闭
             // The related remoting server has been shutdown, so close the connected channel
             RemotingHelper.closeChannel(ctx.channel());
         }

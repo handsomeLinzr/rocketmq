@@ -146,6 +146,9 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
 
     /**
      * Indicate whether to block message when asynchronous sending traffic is too heavy.
+     *
+     * 异步发送流程过大时候是否阻塞，默认 false
+     *
      */
     private boolean enableBackpressureForAsyncMode = false;
 
@@ -357,6 +360,8 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
     /**
      * Send message in synchronous mode. This method returns only when the sending procedure totally completes. </p>
      *
+     * 生产者发送消息
+     *
      * <strong>Warn:</strong> this method has internal retry-mechanism, that is, internal implementation will retry
      * {@link #retryTimesWhenSendFailed} times before claiming failure. As a result, multiple messages may be potentially
      * delivered to broker(s). It's up to the application developers to resolve potential duplication issue.
@@ -372,7 +377,11 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
     @Override
     public SendResult send(
         Message msg) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+
+        // 设置 topic 主题
         msg.setTopic(withNamespace(msg.getTopic()));
+
+        // 发送
         return this.defaultMQProducerImpl.send(msg);
     }
 
@@ -396,6 +405,9 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
     }
 
     /**
+     *
+     * 带回调的发送
+     *
      * Send message to broker asynchronously. </p>
      *
      * This method returns immediately. On sending completion, <code>sendCallback</code> will be executed. </p>
@@ -414,6 +426,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
     public void send(Message msg,
         SendCallback sendCallback) throws MQClientException, RemotingException, InterruptedException {
         msg.setTopic(withNamespace(msg.getTopic()));
+        // 带回调函数的发送消息
         this.defaultMQProducerImpl.send(msg, sendCallback);
     }
 

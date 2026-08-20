@@ -233,6 +233,7 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
 
 
     // 构建 NettyRemotingClient
+    // 远程客户端连接，内部用的 netty
     private final RemotingClient remotingClient;
 
     // 构造函数创建 DefaultTopAddressing
@@ -574,6 +575,23 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
 
     }
 
+    /**
+     *
+     * 同步请求
+     *
+     * @param addr
+     * @param brokerName
+     * @param msg
+     * @param requestHeader
+     * @param timeoutMillis
+     * @param communicationMode
+     * @param context
+     * @param producer
+     * @return
+     * @throws RemotingException
+     * @throws MQBrokerException
+     * @throws InterruptedException
+     */
     public SendResult sendMessage(
         final String addr,
         final String brokerName,
@@ -587,6 +605,27 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
         return sendMessage(addr, brokerName, msg, requestHeader, timeoutMillis, communicationMode, null, null, null, 0, context, producer);
     }
 
+    /**
+     *
+     * 发送请求
+     *
+     * @param addr
+     * @param brokerName
+     * @param msg
+     * @param requestHeader
+     * @param timeoutMillis
+     * @param communicationMode
+     * @param sendCallback
+     * @param topicPublishInfo
+     * @param instance
+     * @param retryTimesWhenSendFailed
+     * @param context
+     * @param producer
+     * @return
+     * @throws RemotingException
+     * @throws MQBrokerException
+     * @throws InterruptedException
+     */
     public SendResult sendMessage(
         final String addr,
         final String brokerName,
@@ -603,8 +642,10 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
     ) throws RemotingException, MQBrokerException, InterruptedException {
         long beginStartTime = System.currentTimeMillis();
         RemotingCommand request = null;
+        // 获取参数
         String msgType = msg.getProperty(MessageConst.PROPERTY_MESSAGE_TYPE);
         boolean isReply = msgType != null && msgType.equals(MixAll.REPLY_MESSAGE_FLAG);
+        // 设置请求码
         if (isReply) {
             if (sendSmartMsg) {
                 SendMessageRequestHeaderV2 requestHeaderV2 = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
@@ -615,6 +656,7 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
         } else {
             if (sendSmartMsg || msg instanceof MessageBatch) {
                 SendMessageRequestHeaderV2 requestHeaderV2 = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
+                // 默认走这里
                 request = RemotingCommand.createRequestCommand(msg instanceof MessageBatch ? RequestCode.SEND_BATCH_MESSAGE : RequestCode.SEND_MESSAGE_V2, requestHeaderV2);
             } else {
                 request = RemotingCommand.createRequestCommand(RequestCode.SEND_MESSAGE, requestHeader);
@@ -627,6 +669,7 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
                 this.remotingClient.invokeOneway(addr, request, timeoutMillis);
                 return null;
             case ASYNC:
+                // 异步
                 final AtomicInteger times = new AtomicInteger();
                 long costTimeAsync = System.currentTimeMillis() - beginStartTime;
                 if (timeoutMillis < costTimeAsync) {
@@ -636,6 +679,7 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
                     retryTimesWhenSendFailed, times, context, producer);
                 return null;
             case SYNC:
+                // 同步
                 long costTimeSync = System.currentTimeMillis() - beginStartTime;
                 if (timeoutMillis < costTimeSync) {
                     throw new RemotingTooMuchRequestException("sendMessage call timeout");
@@ -649,6 +693,20 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
         return null;
     }
 
+    /**
+     *
+     * 同步请求
+     *
+     * @param addr
+     * @param brokerName
+     * @param msg
+     * @param timeoutMillis
+     * @param request
+     * @return
+     * @throws RemotingException
+     * @throws MQBrokerException
+     * @throws InterruptedException
+     */
     private SendResult sendMessageSync(
         final String addr,
         final String brokerName,
@@ -656,8 +714,10 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
         final long timeoutMillis,
         final RemotingCommand request
     ) throws RemotingException, MQBrokerException, InterruptedException {
+        // 同步等待请求
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
+        // 处理解析 response
         return this.processSendResponse(brokerName, msg, response, addr);
     }
 
@@ -669,6 +729,23 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
         }
     }
 
+    /**
+     *
+     * 异步请求
+     *
+     * @param addr
+     * @param brokerName
+     * @param msg
+     * @param timeoutMillis
+     * @param request
+     * @param sendCallback
+     * @param topicPublishInfo
+     * @param instance
+     * @param retryTimesWhenSendFailed
+     * @param times
+     * @param context
+     * @param producer
+     */
     private void sendMessageAsync(
         final String addr,
         final String brokerName,
@@ -685,7 +762,10 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
     ) {
         final long beginStartTime = System.currentTimeMillis();
         try {
+            // 异步请求
             this.remotingClient.invokeAsync(addr, request, timeoutMillis, new InvokeCallback() {
+
+                // 回调
                 @Override
                 public void operationComplete(ResponseFuture responseFuture) {
                     long cost = System.currentTimeMillis() - beginStartTime;
@@ -822,7 +902,8 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
             }
         }
 
-        SendMessageResponseHeader responseHeader =     // 处理结果
+        // 处理结果
+        SendMessageResponseHeader responseHeader =
             (SendMessageResponseHeader) response.decodeCommandCustomHeader(SendMessageResponseHeader.class);
 
         //If namespace not null , reset Topic without namespace.
@@ -1815,18 +1896,48 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
         return getTopicRouteInfoFromNameServer(topic, timeoutMillis, false);
     }
 
+    /**
+     *
+     * 获取远程 broker topic 路由信息，允许 topic 不存在（自动创建)
+     *
+     * @param topic
+     * @param timeoutMillis
+     * @return
+     * @throws RemotingException
+     * @throws MQClientException
+     * @throws InterruptedException
+     */
     public TopicRouteData getTopicRouteInfoFromNameServer(final String topic, final long timeoutMillis)
         throws RemotingException, MQClientException, InterruptedException {
         return getTopicRouteInfoFromNameServer(topic, timeoutMillis, true);
     }
 
+    /**
+     *
+     * 远程获取 topic 的路由信息
+     *
+     * @param topic
+     * @param timeoutMillis
+     * @param allowTopicNotExist
+     * @return
+     * @throws MQClientException
+     * @throws InterruptedException
+     * @throws RemotingTimeoutException
+     * @throws RemotingSendRequestException
+     * @throws RemotingConnectException
+     */
     public TopicRouteData getTopicRouteInfoFromNameServer(final String topic, final long timeoutMillis,
         boolean allowTopicNotExist) throws MQClientException, InterruptedException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException {
         GetRouteInfoRequestHeader requestHeader = new GetRouteInfoRequestHeader();
         requestHeader.setTopic(topic);
+
+        // 创建请求
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ROUTEINFO_BY_TOPIC, requestHeader);
 
-        RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);  // 发送请求
+        // 发送请求，会涉及到第一次的时候，用 netty 进行连接并缓存连接
+        // 通过 channel 发送请求，得到结果
+        RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
+
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.TOPIC_NOT_EXIST: {
@@ -1839,6 +1950,8 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
             case ResponseCode.SUCCESS: {
                 byte[] body = response.getBody();
                 if (body != null) {
+
+                    // 返回 topic 信息
                     return TopicRouteData.decode(body, TopicRouteData.class);
                 }
             }
@@ -1846,6 +1959,7 @@ public class MQClientAPIImpl implements NameServerUpdateCallback {
                 break;
         }
 
+        // 否则抛出异常
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 

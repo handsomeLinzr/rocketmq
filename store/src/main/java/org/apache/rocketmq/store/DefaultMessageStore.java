@@ -180,7 +180,7 @@ public class DefaultMessageStore implements MessageStore {
     private volatile long masterFlushedOffset = -1L;
 
     private volatile long brokerInitMaxOffset = -1L;   // 记录commitLog初始的偏移量
-
+    // 钩子
     protected List<PutMessageHook> putMessageHookList = new ArrayList<>();
 
     private SendMessageBackHook sendMessageBackHook;

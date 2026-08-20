@@ -109,7 +109,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
                 if (requestHeader.isBatch()) {
                     response = this.sendBatchMessage(ctx, request, sendMessageContext, requestHeader, mappingContext,
                         (ctx1, response1) -> executeSendMessageHookAfter(response1, ctx1));
-                } else {
+                } else {  // 普通消息
                     response = this.sendMessage(ctx, request, sendMessageContext, requestHeader, mappingContext,
                         (ctx12, response12) -> executeSendMessageHookAfter(response12, ctx12));
                 }
@@ -262,7 +262,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
         MessageAccessor.setProperties(msgInner, oriProps);
 
         CleanupPolicy cleanupPolicy = CleanupPolicyUtils.getDeletePolicy(Optional.of(topicConfig));
-        if (Objects.equals(cleanupPolicy, CleanupPolicy.COMPACTION)) {
+        if (Objects.equals(cleanupPolicy, CleanupPolicy.COMPACTION)) {   // 跳过
             if (StringUtils.isBlank(msgInner.getKeys())) {
                 response.setCode(ResponseCode.MESSAGE_ILLEGAL);
                 response.setRemark("Required message key is missing");
@@ -302,7 +302,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
             if (sendTransactionPrepareMessage) {  // 处理事务消息逻辑
                 asyncPutMessageFuture = this.brokerController.getTransactionalMessageService().asyncPrepareMessage(msgInner);
             } else {
-                asyncPutMessageFuture = this.brokerController.getMessageStore().asyncPutMessage(msgInner);
+                asyncPutMessageFuture = this.brokerController.getMessageStore().asyncPutMessage(msgInner);   // 异步处理
             }
 
             final int finalQueueIdInt = queueIdInt;
@@ -318,7 +318,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
             }, this.brokerController.getPutMessageFutureExecutor());
             // Returns null to release the send message thread
             return null;
-        } else {
+        } else {   // 同步
             PutMessageResult putMessageResult = null;
             if (sendTransactionPrepareMessage) {
                 putMessageResult = this.brokerController.getTransactionalMessageService().prepareMessage(msgInner);

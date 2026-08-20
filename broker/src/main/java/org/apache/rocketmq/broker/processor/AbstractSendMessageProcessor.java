@@ -460,7 +460,7 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
         final SendMessageRequestHeader requestHeader, final RemotingCommand request,
         final RemotingCommand response) {
         if (!PermName.isWriteable(this.brokerController.getBrokerConfig().getBrokerPermission())
-            && this.brokerController.getTopicConfigManager().isOrderTopic(requestHeader.getTopic())) {
+            && this.brokerController.getTopicConfigManager().isOrderTopic(requestHeader.getTopic())) {   // 跳过
             response.setCode(ResponseCode.NO_PERMISSION);
             response.setRemark("the broker[" + this.brokerController.getBrokerConfig().getBrokerIP1()
                 + "] sending message is forbidden");

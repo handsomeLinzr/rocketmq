@@ -97,6 +97,14 @@ public class ClientMetadata {
         return brokerAddrTable;
     }
 
+    /**
+     *
+     * 解析 topic 路由端点
+     *
+     * @param topic
+     * @param route
+     * @return
+     */
     public static ConcurrentMap<MessageQueue, String> topicRouteData2EndpointsForStaticTopic(final String topic, final TopicRouteData route) {
         if (route.getTopicQueueMappingByBroker() == null
                 || route.getTopicQueueMappingByBroker().isEmpty()) {
@@ -105,6 +113,8 @@ public class ClientMetadata {
         ConcurrentMap<MessageQueue, String> mqEndPointsOfBroker = new ConcurrentHashMap<>();
 
         Map<String, Map<String, TopicQueueMappingInfo>> mappingInfosByScope = new HashMap<>();
+
+        // 遍历
         for (Map.Entry<String, TopicQueueMappingInfo> entry : route.getTopicQueueMappingByBroker().entrySet()) {
             TopicQueueMappingInfo info = entry.getValue();
             String scope = info.getScope();
@@ -116,6 +126,7 @@ public class ClientMetadata {
             }
         }
 
+        // 遍历
         for (Map.Entry<String, Map<String, TopicQueueMappingInfo>> mapEntry : mappingInfosByScope.entrySet()) {
             String scope = mapEntry.getKey();
             Map<String, TopicQueueMappingInfo> topicQueueMappingInfoMap =  mapEntry.getValue();
@@ -147,7 +158,9 @@ public class ClientMetadata {
 
             //accomplish the static logic queues
             for (int i = 0; i < maxTotalNums; i++) {
+                // 创建 MessageQueue，topic + queue 的维度
                 MessageQueue mq = new MessageQueue(topic, TopicQueueMappingUtils.getMockBrokerName(scope), i);
+                // 缓存对应的 broker 端点
                 if (!mqEndPoints.containsKey(mq)) {
                     mqEndPointsOfBroker.put(mq, MixAll.LOGICAL_QUEUE_MOCK_BROKER_NAME_NOT_EXIST);
                 } else {
@@ -155,6 +168,7 @@ public class ClientMetadata {
                 }
             }
         }
+        // 返回 map 缓存
         return mqEndPointsOfBroker;
     }
 

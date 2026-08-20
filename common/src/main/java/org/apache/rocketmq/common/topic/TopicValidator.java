@@ -23,11 +23,19 @@ import org.apache.rocketmq.common.UtilAll;
 public class TopicValidator {
 
     public static final String AUTO_CREATE_TOPIC_KEY_TOPIC = "TBW102"; // Will be created at broker when isAutoCreateTopicEnable
+
+    // 延迟队列
     public static final String RMQ_SYS_SCHEDULE_TOPIC = "SCHEDULE_TOPIC_XXXX";
     public static final String RMQ_SYS_BENCHMARK_TOPIC = "BenchmarkTest";
+
+    // 事务半消息
     public static final String RMQ_SYS_TRANS_HALF_TOPIC = "RMQ_SYS_TRANS_HALF_TOPIC";
+
+    // 延迟
     public static final String RMQ_SYS_TRACE_TOPIC = "RMQ_SYS_TRACE_TOPIC";
     public static final String RMQ_SYS_TRANS_OP_HALF_TOPIC = "RMQ_SYS_TRANS_OP_HALF_TOPIC";
+
+    // 事务 check
     public static final String RMQ_SYS_TRANS_CHECK_MAX_TIME_TOPIC = "TRANS_CHECK_MAX_TIME_TOPIC";
     public static final String RMQ_SYS_SELF_TEST_TOPIC = "SELF_TEST_TOPIC";
     public static final String RMQ_SYS_OFFSET_MOVED_EVENT = "OFFSET_MOVED_EVENT";
@@ -42,10 +50,14 @@ public class TopicValidator {
 
     /**
      * Topics'set which client can not send msg!
+     *
+     * 客户端不能主动推送的主题
+     *
      */
     private static final Set<String> NOT_ALLOWED_SEND_TOPIC_SET = new HashSet<>();
 
     static {
+        // 系统主题
         SYSTEM_TOPIC_SET.add(AUTO_CREATE_TOPIC_KEY_TOPIC);
         SYSTEM_TOPIC_SET.add(RMQ_SYS_SCHEDULE_TOPIC);
         SYSTEM_TOPIC_SET.add(RMQ_SYS_BENCHMARK_TOPIC);
@@ -56,6 +68,7 @@ public class TopicValidator {
         SYSTEM_TOPIC_SET.add(RMQ_SYS_SELF_TEST_TOPIC);
         SYSTEM_TOPIC_SET.add(RMQ_SYS_OFFSET_MOVED_EVENT);
 
+        // 不能主动推的主题
         NOT_ALLOWED_SEND_TOPIC_SET.add(RMQ_SYS_SCHEDULE_TOPIC);
         NOT_ALLOWED_SEND_TOPIC_SET.add(RMQ_SYS_TRANS_HALF_TOPIC);
         NOT_ALLOWED_SEND_TOPIC_SET.add(RMQ_SYS_TRANS_OP_HALF_TOPIC);
@@ -99,6 +112,11 @@ public class TopicValidator {
         return false;
     }
 
+    /**
+     * topic 主题命名规则校验
+     * @param topic
+     * @return
+     */
     public static ValidateTopicResult validateTopic(String topic) {
 
         if (UtilAll.isBlank(topic)) {
@@ -116,6 +134,9 @@ public class TopicValidator {
         return new ValidateTopicResult(true, "");
     }
 
+    /**
+     * topic 校验结果
+     */
     public static class ValidateTopicResult {
         private final boolean valid;
         private final String remark;
